@@ -1,0 +1,105 @@
+// 压电传感器相关
+int sensorPin = A0;   // select the input pin for the potentiometer
+const int numReadings  = 20;
+int readings [numReadings];
+int readIndex  = 0;
+long total  = 0;
+
+//Variables
+int aisVal  = 0;
+int a;int b,c;
+bool flagIn=true;
+bool flagOut=false;
+int j=0;
+int k=0;
+#define IN1 3  //定义IN1为3口
+#define IN2 4  //定义IN2为4口
+#define  ENA  5 //定义ENA为5口
+void setup() {
+  Serial.begin(115200);
+  pinMode(IN1,OUTPUT);
+  pinMode(IN2,OUTPUT);
+  pinMode(ENA,OUTPUT);
+  
+}
+
+void loop() {
+  // cupClamp();
+  // delay(5000);
+  // Serial.println(smooth());
+  // Serial.println(smooth_change());
+}
+
+int smooth_change(){
+  for(int i=0;i<100;i++){
+    b=smooth();
+  }
+  delay(50);
+  for(int i=0;i<100;i++){
+    c=smooth();
+  }
+  Serial.print("b=");
+  Serial.println(b);
+  Serial.print("c=");
+  Serial.println(c);
+  if(((b-c)<3)&&((c-b)<3)){
+    return 0;
+  }else{
+    return 1;
+  }
+}
+
+void cupClamp(){
+  Serial.print("夹紧杯子中");
+  for(int i=0;i<200;i++){
+    a=smooth();
+  }
+  while(k<=30){
+    Serial.print("a=");
+    Serial.println(a);
+    Serial.print("k=");
+    Serial.println(k);
+    Serial.println(smooth());
+    if(flagIn==true && (smooth_change()==0)){
+      Serial.print("丝杆电机不动");
+      digitalWrite(IN1,LOW);
+      digitalWrite(IN2,LOW);
+    }else if(flagIn==true && (smooth()<(a-6))){
+      Serial.println("丝杆电机动");
+      digitalWrite(IN1,LOW);
+      digitalWrite(IN2,HIGH);
+      analogWrite(ENA,250);
+      k=k+1;
+      delay(100);
+    }
+  }
+  Serial.print("已夹紧");
+  flagIn=false;
+  flagOut=true;
+}
+
+void readAnalogSmooth( ) { /* function readAnalogSmooth */
+  ////Test routine for AnalogSmooth
+  aisVal = analogRead(sensorPin);
+  Serial.print(F("sensorValue ")); Serial.println(aisVal);
+}
+
+long smooth() { /* function smooth */
+  ////Perform average on sensor readings
+  long average;
+  // subtract the last reading:
+  total = total - readings[readIndex];
+  // read the sensor:
+  readings[readIndex] = analogRead(sensorPin);
+  // add value to total:
+  total = total + readings[readIndex];
+  // handle index
+  readIndex = readIndex + 1;
+  if (readIndex >= numReadings) {
+    readIndex = 0;
+  }
+  // calculate the average:
+  average = total / numReadings;
+
+  return average;
+}
