@@ -1,0 +1,68 @@
+#include <Stepper.h>
+
+const int stepsPerRevolution = 400;  // change this to fit the number of steps per revolution
+// for your motor
+#define IN3 14  //定义IN1为14口
+const int numReadings1  = 10;
+int readings1 [numReadings1];
+int readIndex1  = 0;
+long total1  = 0;
+
+// initialize the stepper library on pins 8 through 11:
+Stepper myStepper(stepsPerRevolution, 10, 11, 12, 13);
+
+void setup() {
+  // set the speed at 60 rpm:
+  // max 3000
+  pinMode(IN3,INPUT_PULLUP);
+  myStepper.setSpeed(512000);
+  // initialize the serial port:
+  Serial.begin(9600);
+}
+
+long smooth1() { /* function smooth */
+  ////Perform average on sensor readings
+  long average1;
+  // subtract the last reading:
+  total1 = total1 - readings1[readIndex1];
+  // read the sensor:
+  if(digitalRead(IN3)==LOW){
+    readings1[readIndex1] = 1;
+  }
+  else{
+    readings1[readIndex1] = 0;
+  }
+  // add value to total:
+  total1 = total1 + readings1[readIndex1];
+  // handle index
+  readIndex1 = readIndex1 + 1;
+  if (readIndex1 >= numReadings1) {
+    readIndex1 = 0;
+  }
+  // calculate the average:
+  average1 = total1 / numReadings1;
+  return total1;
+}
+
+void loop() {
+  // step one revolution  in one direction:
+  for(int i=0;i<10;i++){
+    smooth1();
+  }
+  if(smooth1()<6){
+    myStepper.step(stepsPerRevolution*1);
+    Serial.println(smooth1());
+    Serial.println("滑台移动");
+  }else{
+    Serial.println("不动");
+    Serial.println(smooth1());
+    delay(10000);
+  }
+  // Serial.println(smooth1());
+  
+  // // step one revolution in the other direction:
+  // Serial.println("counterclockwise");
+  // myStepper.step(-stepsPerRevolution*200);
+  // delay(500);
+}
+
